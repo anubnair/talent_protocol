@@ -32,10 +32,9 @@ Install dependencies/configure env:
 npm install
 # or
 yarn install
-
-cp .env.local.example .env.local
 ```
-Open the .env.local file and add your API key and other environment variables:
+
+Create the .env.local file and add your API key and other environment variables: (as NEXT_PUBLIC_API_KEY=your-api-key)
 
 Run the application via
 
