@@ -1,265 +1,84 @@
 "use client";
 
-import { useState } from "react";
-import { getLanguagesByLocation, getRolesFromBio } from "./utils"; // Import functions from utils
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-
-export default function TalentProfileRetrieval() {
-    const [walletAddress, setWalletAddress] = useState("");
-    const [responseData, setResponseData] = useState(null);
+export default function CredentialsPage() {
+    const searchParams = useSearchParams(); // Access search parameters
+    const passport_id = searchParams.get("passport_id"); // Get the `passport_id` query param
+    const router = useRouter(); // Use router for navigation
+    const [credentials, setCredentials] = useState(null);
     const [error, setError] = useState(null);
 
-    const handleInputChange = (event) => {
-        setWalletAddress(event.target.value);
-    };
-
-    const handleButtonClick = async () => {
-        if (!walletAddress) {
-            alert("Please enter a wallet address.");
-            return;
-        }
-
-        try {
-            const res = await fetch(`https://api.talentprotocol.com/api/v2/passports/${walletAddress}`, {
+    useEffect(() => {
+        if (passport_id) {
+            fetch(`https://api.talentprotocol.com/api/v2/passport_credentials?passport_id=${passport_id}`, {
                 method: "GET",
                 headers: {
                     "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY,
                 },
-            });
-
-            if (!res.ok) {
-                throw new Error(`Error: ${res.status}`);
-            }
-
-            const data = await res.json();
-            setResponseData(data);
-            setError(null);
-        } catch (err) {
-            setError(err.message);
-            setResponseData(null);
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error(`Error: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then((data) => setCredentials(data.passport_credentials))
+                .catch((err) => setError(err.message));
         }
-    };
+    }, [passport_id]);
 
-    const handleClear = () => {
-        setWalletAddress("");
-        setResponseData(null);
-        setError(null);
-    };
+    if (!passport_id) return <p>Loading...</p>;
+    if (error) return <p>Error: {error}</p>;
 
-    const formatJoinedDate = (dateString) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        }).format(date);
-    };
-
-    const renderBoxes = (items, backgroundColor = "#e0e0e0", textColor = "#000") => {
-        return items.map((item, index) => (
-            <div
-                key={index}
+    return (
+        <div style={{ padding: "20px" }}>
+            <button
+                onClick={() => router.push("/")} // Navigate to the home page
                 style={{
-                    display: "inline-block",
-                    padding: "10px 15px",
-                    margin: "5px",
-                    borderRadius: "8px",
-                    backgroundColor,
-                    color: textColor,
-                    fontWeight: "bold",
-                    border: "1px solid #ccc",
+                    backgroundColor: "#0070f3",
+                    color: "#fff",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    marginBottom: "20px",
                 }}
             >
-                {item}
-            </div>
-        ));
-    };
+                Home
+            </button>
 
-    const renderSocials = (socials) => {
-        return socials.map((social, index) => {
-            const sourceIcon = `/${social.source.toLowerCase()}.png`; // Dynamically fetch the icon based on the source
-            return (
-                <a
-                    key={index}
-                    href={social.profile_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={social.profile_display_name}
-                    style={{ marginRight: "10px" }}
-                >
-                    <img
-                        src={sourceIcon || "/default-social-icon.png"} // Use source-specific icon or fallback to default
-                        alt={social.profile_display_name}
-                        style={{
-                            width: "30px",
-                            height: "30px",
-                            borderRadius: social.source.toLowerCase() === "twitter" ? "0" : "50%", // No border-radius for Twitter
-                        }}
-                    />
-                </a>
-            );
-        });
-    };
-    
-    return (
-        <div style={{ fontFamily: "'Roboto', sans-serif", textAlign: "center", margin: "20px" }}>
-            {/* Top Navigation */}
-            <nav style={{ marginBottom: "20px" }}>
-                {["Home", "Profile", "Discover", "Rewards", "Services", "Credentials"].map((item) => (
-                    <span
-                        key={item}
-                        style={{
-                            cursor: item === "Profile" ? "pointer" : "default",
-                            textDecoration: item === "Profile" ? "underline" : "none",
-                            fontWeight: item === "Profile" ? "bold" : "normal",
-                            marginRight: "20px",
-                        }}
-                        onClick={() => item === "Profile" && window.location.reload()}
-                    >
-                        {item}
-                    </span>
-                ))}
-            </nav>
+            <h1>Credentials for Passport: {passport_id}</h1>
 
-            {/* Welcome Section */}
-            <div>
-                <img src="/logo.png" alt="A server surrounded by magic sparkles." style={{ width: "100px" }} />
-                <h1 style={{ fontSize: "24px", margin: "10px 0" }}>Welcome to Talent Profile Retrieval</h1>
-            </div>
-
-            {/* Input Section */}
-            <div style={{ margin: "20px 0" }}>
-                <input
-                    type="text"
-                    placeholder="Enter wallet address"
-                    value={walletAddress}
-                    onChange={handleInputChange}
+            {credentials && (
+                <div
                     style={{
-                        padding: "10px",
-                        width: "300px",
-                        borderRadius: "8px",
-                        border: "1px solid #ccc",
-                        marginRight: "10px",
-                    }}
-                />
-                <button
-                    onClick={handleButtonClick}
-                    style={{
-                        padding: "10px 20px",
-                        backgroundColor: "#4CAF50",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        marginRight: "10px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "20px",
+                        marginTop: "20px",
                     }}
                 >
-                    Submit
-                </button>
-                <button
-                    onClick={handleClear}
-                    style={{
-                        padding: "10px 20px",
-                        backgroundColor: "#f44336",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                    }}
-                >
-                    Clear
-                </button>
-            </div>
-
-            {/* Data Display Section */}
-            {responseData && (
-                <div style={{ marginTop: "20px", textAlign: "left", display: "inline-block", width: "80%" }}>
-                    {/* Profile Information */}
-                    <div style={{ marginBottom: "20px", border: "1px solid #ccc", padding: "20px", borderRadius: "10px" }}>
-                        <img
-                            src={responseData.passport.user.profile_picture_url}
-                            alt="Profile"
-                            style={{
-                                width: "80px",
-                                height: "80px",
-                                borderRadius: "50%",
-                                marginBottom: "10px",
-                            }}
-                        />
-                        <h2>
-                            {responseData.passport.user.name}{" "}
-                            {responseData.passport.passport_profile.verified && (
-                                <img
-                                    src="/tick-mark.png"
-                                    alt="Verified"
-                                    style={{ width: "16px", height: "16px", marginLeft: "5px" }}
-                                />
-                            )}
-                            {responseData.passport.human_checkmark && (
-                                <img
-                                    src="/tick-mark.png"
-                                    alt="Human Verified"
-                                    style={{ width: "16px", height: "16px", marginLeft: "5px" }}
-                                />
-                            )}
-                        </h2>
-                        <p>{responseData.passport.passport_profile.bio}</p>
-                        <p>
-                            <strong>Username:</strong> @{responseData.passport.passport_profile.display_name}
-                        </p>
-                        <p>
-                            <strong>Location:</strong> - {responseData.passport.passport_profile.location}
-                        </p>
-                        <p>
-                        <strong>Rank:</strong>
+                    {credentials.map((cred) => (
                         <div
+                            key={cred.id}
                             style={{
-                                display: "inline-block",
-                                width: "80px",
-                                height: "46px",
-                                backgroundColor: "#800080", // Purple color
-                                position: "relative",
-                                clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+                                border: "1px solid #ccc",
+                                borderRadius: "8px",
+                                padding: "10px",
+                                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
                                 textAlign: "center",
-                                lineHeight: "46px",
-                                fontWeight: "bold",
-                                color: "#fff", // White text for contrast
-                                marginLeft: "10px",
                             }}
                         >
-                            #{responseData.passport.identity_score}
+                            <h3>{cred.name}</h3>
+                            <p><strong>Category:</strong> {cred.category}</p>
+                            <p><strong>Score:</strong> {cred.score}/{cred.max_score}</p>
+                            <p><strong>Value:</strong> {cred.value || "N/A"}</p>
                         </div>
-                    </p>
-
-
-                    </div>
-
-                    {/* Abilities Section */}
-                    <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "10px" }}>
-                        <h3>Abilities</h3>
-                        <div>
-                            <h4>Skills:</h4>
-                            {renderBoxes(responseData.passport.passport_profile.tags, "#d3f9d8", "#2d7a2c")}
-                        </div>
-                        <div>
-                            <h4>Languages:</h4>
-                            {renderBoxes(getLanguagesByLocation(responseData.passport.passport_profile.location), "#d9e8fb", "#214f88")}
-                        </div>
-                        <div>
-                            <h4>Roles:</h4>
-                            {renderBoxes(getRolesFromBio(responseData.passport.passport_profile.bio), "#fddede", "#a94442")}
-                        </div>
-                    </div>
-
-                    {/* Social Links Section */}
-                    <div style={{ marginTop: "20px", padding: "10px", border: "1px solid #ccc", borderRadius: "10px" }}>
-                        <h4>Social Links</h4>
-                        {renderSocials(responseData.passport.passport_socials)}
-                    </div>
+                    ))}
                 </div>
             )}
-
-            {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
     );
 }

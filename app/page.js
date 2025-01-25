@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { getLanguagesByLocation, getRolesFromBio } from "./utils/utils"; // Import functions from utils
-
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
+import { getLanguagesByLocation, getRolesFromBio } from "./utils/utils"; // Import utility functions
 
 export default function TalentProfileRetrieval() {
     const [walletAddress, setWalletAddress] = useState("");
     const [responseData, setResponseData] = useState(null);
     const [error, setError] = useState(null);
+    const router = useRouter(); // Initialize useRouter for navigation
 
     const handleInputChange = (event) => {
         setWalletAddress(event.target.value);
@@ -46,12 +47,20 @@ export default function TalentProfileRetrieval() {
         setError(null);
     };
 
+    const navigateToCredentials = () => {
+        if (responseData && responseData.passport && responseData.passport.passport_id) {
+            router.push(`/credentials?passport_id=${responseData.passport.passport_id}`);
+        } else {
+            alert("Passport ID not available.");
+        }
+    };
+
     const formatJoinedDate = (dateString) => {
         const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+        return new Intl.DateTimeFormat("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
         }).format(date);
     };
 
@@ -77,7 +86,7 @@ export default function TalentProfileRetrieval() {
 
     const renderSocials = (socials) => {
         return socials.map((social, index) => {
-            const sourceIcon = `/${social.source.toLowerCase()}.png`; // Dynamically fetch the icon based on the source
+            const sourceIcon = `/${social.source.toLowerCase()}.png`;
             return (
                 <a
                     key={index}
@@ -88,19 +97,19 @@ export default function TalentProfileRetrieval() {
                     style={{ marginRight: "10px" }}
                 >
                     <img
-                        src={sourceIcon || "/default-social-icon.png"} // Use source-specific icon or fallback to default
+                        src={sourceIcon || "/default-social-icon.png"}
                         alt={social.profile_display_name}
                         style={{
                             width: "30px",
                             height: "30px",
-                            borderRadius: social.source.toLowerCase() === "twitter" ? "0" : "50%", // No border-radius for Twitter
+                            borderRadius: social.source.toLowerCase() === "twitter" ? "0" : "50%",
                         }}
                     />
                 </a>
             );
         });
     };
-    
+
     return (
         <div style={{ fontFamily: "'Roboto', sans-serif", textAlign: "center", margin: "20px" }}>
             {/* Top Navigation */}
@@ -109,12 +118,12 @@ export default function TalentProfileRetrieval() {
                     <span
                         key={item}
                         style={{
-                            cursor: item === "Profile" ? "pointer" : "default",
-                            textDecoration: item === "Profile" ? "underline" : "none",
-                            fontWeight: item === "Profile" ? "bold" : "normal",
+                            cursor: item === "Credentials" ? "pointer" : "default",
+                            textDecoration: item === "Credentials" ? "underline" : "none",
+                            fontWeight: item === "Credentials" ? "bold" : "normal",
                             marginRight: "20px",
                         }}
-                        onClick={() => item === "Profile" && window.location.reload()}
+                        onClick={() => item === "Credentials" && navigateToCredentials()} // Link Credentials to the new page
                     >
                         {item}
                     </span>
@@ -208,30 +217,28 @@ export default function TalentProfileRetrieval() {
                             <strong>Username:</strong> @{responseData.passport.passport_profile.display_name}
                         </p>
                         <p>
-                            <strong>Location:</strong> - {responseData.passport.passport_profile.location}
+                            <strong>Location:</strong> {responseData.passport.passport_profile.location}
                         </p>
                         <p>
-                        <strong>Rank:</strong>
-                        <div
-                            style={{
-                                display: "inline-block",
-                                width: "80px",
-                                height: "46px",
-                                backgroundColor: "#800080", // Purple color
-                                position: "relative",
-                                clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
-                                textAlign: "center",
-                                lineHeight: "46px",
-                                fontWeight: "bold",
-                                color: "#fff", // White text for contrast
-                                marginLeft: "10px",
-                            }}
-                        >
-                            #{responseData.passport.identity_score}
-                        </div>
-                    </p>
-
-
+                            <strong>Rank:</strong>
+                            <div
+                                style={{
+                                    display: "inline-block",
+                                    width: "80px",
+                                    height: "46px",
+                                    backgroundColor: "#800080",
+                                    position: "relative",
+                                    clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+                                    textAlign: "center",
+                                    lineHeight: "46px",
+                                    fontWeight: "bold",
+                                    color: "#fff",
+                                    marginLeft: "10px",
+                                }}
+                            >
+                                #{responseData.passport.identity_score}
+                            </div>
+                        </p>
                     </div>
 
                     {/* Abilities Section */}
@@ -255,6 +262,20 @@ export default function TalentProfileRetrieval() {
                     <div style={{ marginTop: "20px", padding: "10px", border: "1px solid #ccc", borderRadius: "10px" }}>
                         <h4>Credentials</h4>
                         {renderSocials(responseData.passport.passport_socials)}
+                        <button
+                            onClick={navigateToCredentials}
+                            style={{
+                                padding: "10px 20px",
+                                backgroundColor: "#007BFF",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                                marginTop: "10px",
+                            }}
+                        >
+                            Go to Credentials Page
+                        </button>
                     </div>
                 </div>
             )}
