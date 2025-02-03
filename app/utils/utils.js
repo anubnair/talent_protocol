@@ -80,12 +80,14 @@ export const getRolesFromBio = (bio) => {
     const matchedRoles = [];
 
     // Iterate over the mapping to find keywords in the bio
-    Object.keys(bioRolesMapping).forEach((keyword) => {
-        if (bio.toLowerCase().includes(keyword)) {
-            matchedRoles.push(...bioRolesMapping[keyword]);
-        }
-    });
-
+    if (bio) {
+          Object.keys(bioRolesMapping).forEach((keyword) => {
+              if (bio.toLowerCase().includes(keyword)) {
+                  matchedRoles.push(...bioRolesMapping[keyword]);
+              }
+          });
+    }
+    
     // Default to a generic role if no match is found
     return matchedRoles.length > 0 ? matchedRoles : ["Professional"];
 };
